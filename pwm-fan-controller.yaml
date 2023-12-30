@@ -1,0 +1,99 @@
+# These substitutions allow the end user to override certain values
+substitutions:
+  name: "pwm-fan-controller"
+  friendly_name: "PWM Fan Controller"
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  comment: ESP32 Based DC PWM Fan Controller
+  # Automatically add the mac address to the name
+  # so you can use a single firmware for all devices
+  name_add_mac_suffix: true
+  platformio_options:
+    upload_speed: 115200
+    # CPU Frequency
+    board_build.f_cpu: 240000000L # 240 MHz
+    # Flash Frequency
+    board_build.f_flash: 80000000L # 80 MHz
+    # SPI Flash Mode
+    board_build.flash_mode: qio # Quad Input Output
+  project:
+    name: atechofficials.dc-pwm-fan-controller
+    version: "1.0"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+  flash_size: 16MB
+  variant: esp32
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+# Enable over-the-air updates
+ota:
+
+# This should point to the public location of this yaml file.
+dashboard_import:
+  package_import_url: https://github.com/atechofficials/esphome_config/pwm-fan-controller.yaml@main
+  import_full_config: false # or true
+
+wifi:
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "A-Tech PWM Fan Controller"
+    password: "12345678"
+
+captive_portal:
+
+# Sets up Bluetooth LE (Only on ESP32) to allow the user
+# to provision wifi credentials to the device.
+esp32_improv:
+  # A binary sensor to authorize with. Also accepts none/false to skip authorization.
+  authorizer: none
+  authorized_duration: 1min
+  # An output to display feedback to the user.
+  status_indicator: status_led
+  identify_duration: 10s
+  wifi_timeout: 1min
+
+output:
+  - platform: gpio
+    pin:
+      number: GPIO17
+      inverted: false
+      mode: OUTPUT
+    id: status_led
+
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO16
+      mode: OUTPUT
+    inverted: false
+    restore_mode: RESTORE_DEFAULT_OFF
+    name: "PWM Fan Power"
+    entity_category: "config"
+    device_class: "switch"
+    id: pwm_fan_power
+
+sensor:
+  - platform: pulse_counter
+    pin:
+      number: GPIO13
+    name: "PWM Fan Speed"
+    unit_of_measurement: "RPM"
+    state_class: "measurement"
+    filters:
+      - multiply: 0.5
+    count_mode:
+      rising_edge: INCREMENT # Default Value
+      falling_edge: DISABLE # Default Value
+    use_pcnt: true # Default Value
+    update_interval: 3s
+    id: pwm_fan_speed
